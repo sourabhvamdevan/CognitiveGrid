@@ -1,0 +1,28 @@
+digraph architecture {
+	bgcolor=white compound=true dpi=170 fontname=Helvetica fontsize=18 label="CognitiveGrid Multi-Agent Pipeline — Guarded Sequential Handoff Architecture" labelloc=t nodesep=0.45 pad=0.4 rankdir=TB ranksep=0.6
+	node [fontcolor="#FFFFFF" fontname=Helvetica fontsize=12 margin="0.22,0.14" penwidth=1.6 shape=box style="filled,rounded"]
+	edge [color="#475569" fontcolor="#334155" fontname=Helvetica fontsize=10 penwidth=1.5]
+	user [label="User Mission Objective\n(custom prompt or domain preset)" color="#7A5C00" fillcolor="#F5A623" fontcolor="#1B1F24"]
+	ig [label="InputGuard & Mode Router\nvalidate objective · isolate API key · select engine" color="#6E1018" fillcolor="#D1242F"]
+	subgraph cluster_agents {
+		color="#2F5FBF" fontcolor="#2F5FBF" fontname="Helvetica-Bold" fontsize=12 label="Autonomous 4-Agent Swarm — context accumulated & audited at every handoff" style="rounded,dashed,filled" fillcolor="#EAF1FF" penwidth=2
+		pl [label="01 · Planner Agent\n(Task Decomposer · plan_schema)" color="#3B1E7A" fillcolor="#8957E5"]
+		re [label="02 · Researcher Agent\n(Domain Synthesizer · kb_retrieval)" color="#054545" fillcolor="#0E8A8A"]
+		bu [label="03 · Builder Agent\n(Code Synthesizer · code_synth)" color="#7A3300" fillcolor="#E36209"]
+		rv [label="04 · Reviewer Agent\n(QA Critic & Scorer · qa_audit)" color="#0A3069" fillcolor="#1F6FEB"]
+		pl -> re [label=" milestones" color="#8957E5" fontcolor="#8957E5"]
+		re -> bu [label=" architecture + bounds" color="#0E8A8A" fontcolor="#0E8A8A"]
+		bu -> rv [label=" code artifact" color="#E36209" fontcolor="#E36209"]
+	}
+	engine [label="Execution Backend\nGemini 3.8 Flash (google-genai)  |  Zero-Config Simulator" color="#5C4400" fillcolor="#BF8700"]
+	og [label="OutputGuard & DOM Sanitizer\ntextContent XSS guard · no eval/exec · secret check" color="#6E1018" fillcolor="#D1242F"]
+	rep [label="Verified Deliverable + QA Score\n(Interactive Inspector + .MD Report Export)" color="#0B3D1A" fillcolor="#1A7F37"]
+	sr [label="Safe Fallback / Validation Toast\n(empty input blocked · clean fallback)" color="#3A1F00" fillcolor="#C2410C"]
+	user -> ig [color="#B8860B" penwidth=2]
+	ig -> pl [lhead=cluster_agents color="#D1242F" penwidth=2]
+	engine -> pl [label=" model / sim steps " lhead=cluster_agents style=dashed color="#BF8700" fontcolor="#8A6100"]
+	rv -> og [label="  audited outputs + score" ltail=cluster_agents color="#1F6FEB" fontcolor="#1F6FEB" penwidth=2]
+	og -> rep [color="#1A7F37" penwidth=2]
+	ig -> sr [label=" empty / invalid" color="#C2410C" constraint=false fontcolor="#C2410C" style=dashed]
+	og -> sr [label=" API error -> auto fallback" color="#C2410C" constraint=false fontcolor="#C2410C" style=dashed]
+}
