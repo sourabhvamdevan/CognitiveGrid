@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python tests (3.11 / 3.12)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx ruff
+
+      - name: Lint (ruff)
+        run: ruff check . --select E9,F63,F7,F82
+
+      - name: Compile check
+        run: python -m compileall -q agents.py server.py
+
+      - name: Run tests
+        env:
+          GEMINI_API_KEY: ""
+        run: pytest -q
+
+  node:
+    name: Vercel function syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax check api/orchestrate.js
+        run: node --check api/orchestrate.js
+
+      - name: Install Node dependencies
+        run: npm install --no-audit --no-fund
+
+  docker:
+    name: Docker build and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: cognitivegrid:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run container and smoke test
+        run: |
+          docker run -d --name cg -p 8000:8000 cognitivegrid:ci
+          for i in $(seq 1 20); do
+            if curl -fsS http://localhost:8000/ -o /dev/null; then
+              echo "App is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "App did not start"; docker logs cg; exit 1
