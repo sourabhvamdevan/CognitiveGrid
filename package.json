@@ -1,0 +1,10 @@
+{
+  "name": "nexusflow-agentic-multiagent-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Agentic AI Multi-Agent Orchestration System (Planner, Researcher, Builder, Reviewer) ready for Vercel and Render",
+  "dependencies": {
+    "@google/genai": "^2.29.1"
+  }
+}

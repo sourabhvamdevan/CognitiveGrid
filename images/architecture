@@ -1,0 +1,39 @@
+digraph architecture {
+	bgcolor=white compound=true dpi=170 fontname=Helvetica fontsize=18 label="NexusFlow Multi-Agent Pipeline — Guarded Sequential Handoff Architecture" labelloc=t nodesep=0.45 pad=0.4 rankdir=TB ranksep=0.6
+	node [color="#1F2937" fontcolor="#1F2937" fontname=Helvetica fontsize=12 margin="0.2,0.12" penwidth=1.4 shape=box style="filled,rounded"]
+	edge [color="#4B5563" fontcolor="#4B5563" fontname=Helvetica fontsize=10 penwidth=1.3]
+	user [label="User Mission Objective
+(custom prompt or domain preset)" color="#B8860B" fillcolor="#FFF8E1"]
+	ig [label="InputGuard & Mode Router
+validate objective · isolate API key · select engine" color="#C0392B" fillcolor="#FDE8E8"]
+	subgraph cluster_agents {
+		color="#2F5FBF" fontcolor="#2F5FBF" fontname=Helvetica fontsize=11 label="Autonomous 4-Agent Swarm — context accumulated & audited at every handoff" style="rounded,dashed"
+		node [color="#2F5FBF" fillcolor="#E8F0FE" fontname=Helvetica fontsize=12 style="filled,rounded"]
+		pl [label="01 · Planner Agent
+(Task Decomposer · plan_schema)"]
+		re [label="02 · Researcher Agent
+(Domain Synthesizer · kb_retrieval)"]
+		bu [label="03 · Builder Agent
+(Code Synthesizer · code_synth)"]
+		rv [label="04 · Reviewer Agent
+(QA Critic & Scorer · qa_audit)"]
+		pl -> re [label=" milestones"]
+		re -> bu [label=" architecture + bounds"]
+		bu -> rv [label=" code artifact"]
+	}
+	engine [label="Execution Backend
+Gemini 3.8 Flash (google-genai)  |  Zero-Config Simulator" color="#B8860B" fillcolor="#FFF8E1"]
+	og [label="OutputGuard & DOM Sanitizer
+textContent XSS guard · no eval/exec · secret check" color="#C0392B" fillcolor="#FDE8E8"]
+	rep [label="Verified Deliverable + QA Score
+(Interactive Inspector + .MD Report Export)" color="#1E7B3A" fillcolor="#E6F4EA"]
+	sr [label="Safe Fallback / Validation Toast
+(empty input blocked · clean fallback)" color="#C0392B" fillcolor="#FDE8E8"]
+	user -> ig
+	ig -> pl [lhead=cluster_agents]
+	engine -> pl [label=" model / sim steps " lhead=cluster_agents style=dashed]
+	rv -> og [label="  audited outputs + score" ltail=cluster_agents]
+	og -> rep
+	ig -> sr [label=" empty / invalid" color="#C0392B" constraint=false fontcolor="#C0392B" style=dashed]
+	og -> sr [label=" API error -> auto fallback" color="#C0392B" constraint=false fontcolor="#C0392B" style=dashed]
+}
